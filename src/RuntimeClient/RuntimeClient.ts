@@ -16,7 +16,7 @@ import {
 } from "http";
 import { URL } from "url";
 
-import { InvocationResponse, NativeClient } from "../Common";
+import { InvocationResponse, NativeClient, INVOKE_HEADER } from "../Common";
 import * as Errors from "../Errors";
 
 const ERROR_TYPE_HEADER = "Lambda-Runtime-Function-Error-Type";
@@ -65,6 +65,7 @@ export default class RuntimeClient implements IRuntimeClient {
 
   hostname: string;
   port: number;
+  path: string;
 
   constructor(hostnamePort: string, httpClient?: HttpModule) {
     this.http = httpClient || require("http");
@@ -72,9 +73,10 @@ export default class RuntimeClient implements IRuntimeClient {
       process.env["AWS_LAMBDA_NODEJS_USE_ALTERNATIVE_CLIENT_1"] === "true";
     this.userAgent = userAgent();
 
-    const [hostname, port] = hostnamePort.split(":");
-    this.hostname = hostname;
-    this.port = parseInt(port, 10);
+    const url = new URL("http://" + hostnamePort);
+    this.hostname = url.hostname;
+    this.port = parseInt(url.port, 10);
+    this.path = url.pathname;
     this.agent = new this.http.Agent({
       keepAlive: true,
       maxSockets: 1,
@@ -95,11 +97,12 @@ export default class RuntimeClient implements IRuntimeClient {
     id: string,
     callback: () => void
   ): void {
-    const bodyString = _trySerializeResponse(response);
     this._post(
       `/2018-06-01/runtime/invocation/${id}/response`,
-      bodyString,
-      {},
+      response,
+      {
+        [INVOKE_HEADER.AWSRequestId]: id,
+      },
       callback
     );
   }
@@ -130,15 +133,13 @@ export default class RuntimeClient implements IRuntimeClient {
    */
   postInvocationError(error: unknown, id: string, callback: () => void): void {
     const response = Errors.toRuntimeResponse(error);
-    const bodyString = _trySerializeResponse(response);
     // const xrayString = XRayError.toFormatted(error);
     this._post(
       `/2018-06-01/runtime/invocation/${id}/error`,
-      bodyString,
-      {},
+      response.errorMessage,
+      { [INVOKE_HEADER.AWSRequestId]: id },
       callback
     );
-    callback();
   }
 
   /**
@@ -151,7 +152,7 @@ export default class RuntimeClient implements IRuntimeClient {
     const options = {
       hostname: this.hostname,
       port: this.port,
-      path: "/2018-06-01/runtime/invocation/next",
+      path: this.path + "/2018-06-01/runtime/invocation/next",
       method: "GET",
       agent: this.agent,
       headers: {
@@ -201,7 +202,7 @@ export default class RuntimeClient implements IRuntimeClient {
     const options: RequestOptions = {
       hostname: this.hostname,
       port: this.port,
-      path: path,
+      path: this.path + path,
       method: "POST",
       headers: Object.assign(
         {
