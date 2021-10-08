@@ -18,7 +18,6 @@ import { URL } from "url";
 
 import { InvocationResponse, NativeClient } from "../Common";
 import * as Errors from "../Errors";
-import * as XRayError from "../Errors/XRayError";
 
 const ERROR_TYPE_HEADER = "Lambda-Runtime-Function-Error-Type";
 
@@ -60,25 +59,18 @@ function userAgent(): string {
 export default class RuntimeClient implements IRuntimeClient {
   agent: Agent;
   http: HttpModule;
-  nativeClient: NativeClient;
   userAgent: string;
   useAlternativeClient: boolean;
+  nativeClient?: NativeClient;
 
   hostname: string;
   port: number;
 
-  constructor(
-    hostnamePort: string,
-    httpClient?: HttpModule,
-    nativeClient?: NativeClient
-  ) {
+  constructor(hostnamePort: string, httpClient?: HttpModule) {
     this.http = httpClient || require("http");
-    this.nativeClient =
-      nativeClient || require("../../build/Release/runtime-client.node");
-    this.userAgent = userAgent();
-    this.nativeClient.initializeClient(this.userAgent);
     this.useAlternativeClient =
       process.env["AWS_LAMBDA_NODEJS_USE_ALTERNATIVE_CLIENT_1"] === "true";
+    this.userAgent = userAgent();
 
     const [hostname, port] = hostnamePort.split(":");
     this.hostname = hostname;
@@ -104,8 +96,12 @@ export default class RuntimeClient implements IRuntimeClient {
     callback: () => void
   ): void {
     const bodyString = _trySerializeResponse(response);
-    this.nativeClient.done(id, bodyString);
-    callback();
+    this._post(
+      `/2018-06-01/runtime/invocation/${id}/response`,
+      bodyString,
+      {},
+      callback
+    );
   }
 
   /**
@@ -135,8 +131,13 @@ export default class RuntimeClient implements IRuntimeClient {
   postInvocationError(error: unknown, id: string, callback: () => void): void {
     const response = Errors.toRuntimeResponse(error);
     const bodyString = _trySerializeResponse(response);
-    const xrayString = XRayError.toFormatted(error);
-    this.nativeClient.error(id, bodyString, xrayString);
+    // const xrayString = XRayError.toFormatted(error);
+    this._post(
+      `/2018-06-01/runtime/invocation/${id}/error`,
+      bodyString,
+      {},
+      callback
+    );
     callback();
   }
 
@@ -147,41 +148,37 @@ export default class RuntimeClient implements IRuntimeClient {
    *   as json and the header array. e.g. {bodyJson, headers}
    */
   async nextInvocation(): Promise<InvocationResponse> {
-    if (this.useAlternativeClient) {
-      const options = {
-        hostname: this.hostname,
-        port: this.port,
-        path: "/2018-06-01/runtime/invocation/next",
-        method: "GET",
-        agent: this.agent,
-        headers: {
-          "User-Agent": this.userAgent,
-        },
-      };
-      return new Promise((resolve, reject) => {
-        const request = this.http.request(options, (response) => {
-          let data = "";
-          response
-            .setEncoding("utf-8")
-            .on("data", (chunk) => {
-              data += chunk;
-            })
-            .on("end", () => {
-              resolve({
-                bodyJson: data,
-                headers: response.headers,
-              });
-            });
-        });
-        request
-          .on("error", (e) => {
-            reject(e);
+    const options = {
+      hostname: this.hostname,
+      port: this.port,
+      path: "/2018-06-01/runtime/invocation/next",
+      method: "GET",
+      agent: this.agent,
+      headers: {
+        "User-Agent": this.userAgent,
+      },
+    };
+    return new Promise((resolve, reject) => {
+      const request = this.http.request(options, (response) => {
+        let data = "";
+        response
+          .setEncoding("utf-8")
+          .on("data", (chunk) => {
+            data += chunk;
           })
-          .end();
+          .on("end", () => {
+            resolve({
+              bodyJson: data,
+              headers: response.headers,
+            });
+          });
       });
-    }
-
-    return this.nativeClient.next();
+      request
+        .on("error", (e) => {
+          reject(e);
+        })
+        .end();
+    });
   }
 
   /**

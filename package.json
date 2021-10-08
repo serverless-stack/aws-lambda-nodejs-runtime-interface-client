@@ -1,5 +1,5 @@
 {
-  "name": "aws-lambda-ric",
+  "name": "@serverless-stack/aws-lambda-ric",
   "version": "2.0.0",
   "description": "AWS Lambda Runtime Interface Client for NodeJs",
   "homepage": "https://github.com/aws/aws-lambda-nodejs-runtime-interface-client",
@@ -10,11 +10,8 @@
     "clean": "npx rimraf {build, node_modules} && npx rimraf deps/{build_complete.txt, aws-lambda-cpp, curl}",
     "copy-files": "mkdir -p lib/RuntimeClient && cp src/RuntimeClient/runtime-client.cc lib/RuntimeClient/runtime-client.cc",
     "update-deps": "./scripts/update_dependencies.sh",
-    "preinstall": "./scripts/preinstall.sh",
-    "postinstall": "./scripts/postinstall.sh",
     "build": "npx rimraf lib && tsc -b src",
     "build:gyp": "node-gyp rebuild",
-    "postbuild": "npm run copy-files",
     "format": "npm run format:src && npm run format:test",
     "format:src": "prettier --check \"src/**/*.ts\" --write",
     "format:test": "prettier --check \"test/**/*.ts\" --write",
