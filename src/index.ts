@@ -13,10 +13,10 @@ import * as Errors from "./Errors";
 import RuntimeClient from "./RuntimeClient";
 import Runtime from "./Runtime";
 import BeforeExitListener from "./Runtime/BeforeExitListener";
-import LogPatch from "./utils/LogPatch";
+// import LogPatch from "./utils/LogPatch";
 import * as UserFunction from "./utils/UserFunction";
 
-LogPatch.patchConsole();
+// LogPatch.patchConsole();
 
 export function run(appRoot: string, handler: string): void;
 export function run(handler: HandlerFunction): void;
