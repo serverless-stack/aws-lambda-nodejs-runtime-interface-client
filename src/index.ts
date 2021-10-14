@@ -41,7 +41,7 @@ export function run(
 
   process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception", Errors.toFormatted(error));
-    errorCallbacks.uncaughtException(error);
+    process.exit(129);
   });
 
   process.on("unhandledRejection", (reason, promise) => {
