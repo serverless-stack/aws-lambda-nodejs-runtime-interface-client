@@ -136,7 +136,7 @@ export default class RuntimeClient implements IRuntimeClient {
     // const xrayString = XRayError.toFormatted(error);
     this._post(
       `/2018-06-01/runtime/invocation/${id}/error`,
-      response.errorMessage,
+      response,
       { [INVOKE_HEADER.AWSRequestId]: id },
       callback
     );
