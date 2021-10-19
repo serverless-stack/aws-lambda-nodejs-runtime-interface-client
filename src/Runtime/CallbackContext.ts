@@ -10,7 +10,6 @@ import {
   ErrorStringOrUndefined,
   CallbackFunction,
 } from "../Common";
-import * as Errors from "../Errors";
 import { IRuntimeClient } from "../RuntimeClient";
 
 /**
@@ -38,14 +37,6 @@ export const build = function (
   return _wrappedCallbackContext(callback, context);
 };
 
-function _homogeneousError(err: ErrorStringOrUndefined) {
-  if (err instanceof Error) {
-    return err;
-  } else {
-    return new Error(err);
-  }
-}
-
 /**
  * Build the callback function and the part of the context which exposes
  * the succeed/fail/done callbacks.
@@ -63,8 +54,6 @@ function _rawCallbackContext(
   scheduleNext: () => void
 ): [CallbackFunction, ICallbackContext] {
   const postError = (err: ErrorStringOrUndefined, callback: () => void) => {
-    const homogeneousError = _homogeneousError(err);
-    console.error("Invoke Error", Errors.toFormatted(homogeneousError));
     client.postInvocationError(err, id, callback);
   };
 
