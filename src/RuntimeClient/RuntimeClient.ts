@@ -15,6 +15,7 @@ import {
   OutgoingHttpHeaders,
 } from "http";
 import { URL } from "url";
+import inspector from "inspector";
 
 import { InvocationResponse, NativeClient, INVOKE_HEADER } from "../Common";
 import * as Errors from "../Errors";
@@ -78,7 +79,7 @@ export default class RuntimeClient implements IRuntimeClient {
     this.port = parseInt(url.port, 10);
     this.path = url.pathname;
     this.agent = new this.http.Agent({
-      keepAlive: true,
+      keepAlive: inspector.url() === undefined,
       maxSockets: 1,
     });
   }
