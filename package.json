@@ -4,6 +4,7 @@
   "description": "AWS Lambda Runtime Interface Client for NodeJs",
   "homepage": "https://github.com/aws/aws-lambda-nodejs-runtime-interface-client",
   "main": "lib/index.js",
+  "type": "module",
   "gypfile": true,
   "scripts": {
     "archive": "npx rimraf aws-lambda-ric-*.tgz && npm install && npm run build && npm pack",

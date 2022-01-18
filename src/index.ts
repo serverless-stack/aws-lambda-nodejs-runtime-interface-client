@@ -8,23 +8,23 @@
 
 "use strict";
 
-import { HandlerFunction, isHandlerFunction } from "./Common";
-import * as Errors from "./Errors";
-import RuntimeClient from "./RuntimeClient";
-import Runtime from "./Runtime";
-import BeforeExitListener from "./Runtime/BeforeExitListener";
+import { HandlerFunction, isHandlerFunction } from "./Common/index.js";
+import * as Errors from "./Errors/index.js";
+import RuntimeClient from "./RuntimeClient/index.js";
+import Runtime from "./Runtime/index.js";
+import BeforeExitListener from "./Runtime/BeforeExitListener.js";
 // import LogPatch from "./utils/LogPatch";
-import * as UserFunction from "./utils/UserFunction";
+import * as UserFunction from "./utils/UserFunction.js";
 
 // LogPatch.patchConsole();
 
 export function run(appRoot: string, handler: string): void;
 export function run(handler: HandlerFunction): void;
 
-export function run(
+export async function run(
   appRootOrHandler: string | HandlerFunction,
   handler: string = ""
-): void {
+) {
   if (!process.env.AWS_LAMBDA_RUNTIME_API) {
     throw new Error("Missing Runtime API Server configuration.");
   }
@@ -58,7 +58,7 @@ export function run(
 
   const handlerFunc = isHandlerFunction(appRootOrHandler)
     ? appRootOrHandler
-    : (UserFunction.load(appRootOrHandler, handler) as HandlerFunction);
+    : ((await UserFunction.load(appRootOrHandler, handler)) as HandlerFunction);
   const runtime = new Runtime(client, handlerFunc, errorCallbacks);
 
   runtime.scheduleIteration();

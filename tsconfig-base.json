@@ -3,9 +3,8 @@
     "composite": true,
 
     // As recmmoneded in https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping#node-10
-    "target": "es2018",
-    "module": "commonjs",
-    "lib": ["es2018"],
+    "target": "es2020",
+    "module": "esnext",
     "moduleResolution": "node",
     "declaration": true,
     "declarationMap": true,

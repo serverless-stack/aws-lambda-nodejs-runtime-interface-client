@@ -10,13 +10,13 @@
 
 import path from "path";
 import fs from "fs";
-import { HandlerFunction } from "../Common";
+import { HandlerFunction } from "../Common/index.js";
 import {
   HandlerNotFound,
   MalformedHandlerName,
   ImportModuleError,
   UserCodeSyntaxError,
-} from "../Errors";
+} from "../Errors/index.js";
 
 const FUNCTION_EXPR = /^([^.]*)\.(.*)$/;
 const RELATIVE_PATH_SUBSTRING = "..";
@@ -72,17 +72,21 @@ function _canLoadAsFile(modulePath: string): boolean {
  * Attempts to directly resolve the module relative to the application root,
  * then falls back to the more general require().
  */
-function _tryRequire(appRoot: string, moduleRoot: string, module: string): any {
+async function _tryRequire(
+  appRoot: string,
+  moduleRoot: string,
+  module: string
+) {
   const lambdaStylePath = path.resolve(appRoot, moduleRoot, module);
   if (_canLoadAsFile(lambdaStylePath)) {
-    return require(lambdaStylePath);
+    return await import(lambdaStylePath + ".js");
   } else {
     // Why not just require(module)?
     // Because require() is relative to __dirname, not process.cwd()
     const nodeStylePath = require.resolve(module, {
       paths: [appRoot, moduleRoot],
     });
-    return require(nodeStylePath);
+    return await import(nodeStylePath);
   }
 }
 
@@ -92,13 +96,13 @@ function _tryRequire(appRoot: string, moduleRoot: string, module: string): any {
  *   1 - UserCodeSyntaxError if there's a syntax error while loading the module
  *   2 - ImportModuleError if the module cannot be found
  */
-function _loadUserApp(
+async function _loadUserApp(
   appRoot: string,
   moduleRoot: string,
   module: string
-): any {
+) {
   try {
-    return _tryRequire(appRoot, moduleRoot, module);
+    return await _tryRequire(appRoot, moduleRoot, module);
   } catch (e) {
     if (e instanceof SyntaxError) {
       throw new UserCodeSyntaxError(<any>e);
@@ -137,18 +141,17 @@ function _throwIfInvalidHandler(fullHandlerString: string): void {
  *       for traversing up the filesystem '..')
  *   Errors for scenarios known by the runtime, will be wrapped by Runtime.* errors.
  */
-export const load = function (
+export const load = async function (
   appRoot: string,
   fullHandlerString: string
-): HandlerFunction {
+): Promise<HandlerFunction> {
   _throwIfInvalidHandler(fullHandlerString);
 
-  const [moduleRoot, moduleAndHandler] = _moduleRootAndHandler(
-    fullHandlerString
-  );
+  const [moduleRoot, moduleAndHandler] =
+    _moduleRootAndHandler(fullHandlerString);
   const [module, handlerPath] = _splitHandlerString(moduleAndHandler);
 
-  const userApp = _loadUserApp(appRoot, moduleRoot, module);
+  const userApp = await _loadUserApp(appRoot, moduleRoot, module);
   const handlerFunc = _resolveHandler(userApp, handlerPath);
 
   if (!handlerFunc) {

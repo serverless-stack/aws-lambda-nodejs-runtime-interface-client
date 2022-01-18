@@ -15,8 +15,8 @@ import {
   IHeaderData,
   IEnvironmentData,
   INVOKE_HEADER,
-} from "../Common";
-import LogPatch from "../utils/LogPatch";
+} from "../Common/index.js";
+import LogPatch from "../utils/LogPatch.js";
 
 const setCurrentRequestId = LogPatch.setCurrentRequestId;
 

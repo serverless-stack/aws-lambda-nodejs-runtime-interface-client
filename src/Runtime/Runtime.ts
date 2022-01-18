@@ -7,11 +7,11 @@
 
 "use strict";
 
-import BeforeExitListener from "./BeforeExitListener";
-import { HandlerFunction, IErrorCallbacks } from "../Common";
-import * as CallbackContext from "./CallbackContext";
-import InvokeContext from "./InvokeContext";
-import { IRuntimeClient } from "../RuntimeClient";
+import BeforeExitListener from "./BeforeExitListener.js";
+import { HandlerFunction, IErrorCallbacks } from "../Common/index.js";
+import * as CallbackContext from "./CallbackContext.js";
+import InvokeContext from "./InvokeContext.js";
+import { IRuntimeClient } from "../RuntimeClient/index.js";
 
 export default class Runtime {
   client: IRuntimeClient;

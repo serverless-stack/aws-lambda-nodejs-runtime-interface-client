@@ -16,9 +16,14 @@ import {
 } from "http";
 import { URL } from "url";
 import inspector from "inspector";
+import http from "http";
 
-import { InvocationResponse, NativeClient, INVOKE_HEADER } from "../Common";
-import * as Errors from "../Errors";
+import {
+  InvocationResponse,
+  NativeClient,
+  INVOKE_HEADER,
+} from "../Common/index.js";
+import * as Errors from "../Errors/index.js";
 
 const ERROR_TYPE_HEADER = "Lambda-Runtime-Function-Error-Type";
 
@@ -48,7 +53,7 @@ export interface IRuntimeClient {
 
 function userAgent(): string {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const version = require("../../package.json").version;
+  const version = "sst";
 
   return `aws-lambda-nodejs/${process.version}-${version}`;
 }
@@ -69,7 +74,7 @@ export default class RuntimeClient implements IRuntimeClient {
   path: string;
 
   constructor(hostnamePort: string, httpClient?: HttpModule) {
-    this.http = httpClient || require("http");
+    this.http = httpClient || http;
     this.useAlternativeClient =
       process.env["AWS_LAMBDA_NODEJS_USE_ALTERNATIVE_CLIENT_1"] === "true";
     this.userAgent = userAgent();
