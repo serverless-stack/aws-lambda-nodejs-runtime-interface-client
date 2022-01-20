@@ -9,6 +9,7 @@
 "use strict";
 
 import path from "path";
+import url from "url";
 import fs from "fs";
 import { HandlerFunction } from "../Common/index.js";
 import {
@@ -79,7 +80,7 @@ async function _tryRequire(
 ) {
   const lambdaStylePath = path.resolve(appRoot, moduleRoot, module);
   if (_canLoadAsFile(lambdaStylePath)) {
-    return await import(lambdaStylePath + ".js");
+    return await import(url.pathToFileURL(lambdaStylePath + ".js").href);
   } else {
     // Why not just require(module)?
     // Because require() is relative to __dirname, not process.cwd()
