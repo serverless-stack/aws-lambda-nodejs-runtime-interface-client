@@ -53,9 +53,15 @@ function _splitHandlerString(handler: string): [string, string] {
  * Resolve the user's handler function from the module.
  */
 function _resolveHandler(object: any, nestedProperty: string): any {
-  return nestedProperty.split(".").reduce((nested, key) => {
-    return nested && nested[key];
-  }, object);
+  return nestedProperty.split(".").reduce(
+    (nested, key) => {
+      return nested && nested[key];
+    },
+    // For some reason esbuild is double nesting default exports
+    nestedProperty === "default" && object.default?.default
+      ? object.default
+      : object
+  );
 }
 
 /**
