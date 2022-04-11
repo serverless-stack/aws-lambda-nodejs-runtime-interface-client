@@ -40,7 +40,7 @@ export async function run(
   };
 
   process.on("uncaughtException", (error) => {
-    console.error("Uncaught Exception", Errors.toFormatted(error));
+    errorCallbacks.uncaughtException(error);
     process.exit(129);
   });
 
@@ -49,7 +49,6 @@ export async function run(
       reason?.toString(),
       promise
     );
-    console.error("Unhandled Promise Rejection", Errors.toFormatted(error));
     errorCallbacks.unhandledRejection(error);
   });
 
